@@ -305,3 +305,6 @@ const getLiveScoreUpdates = () => {
     return db.checkForLiveGames()
 }
 
+
+// getLiveScoreUpdates()
+pullProjectionsByWeek(2)

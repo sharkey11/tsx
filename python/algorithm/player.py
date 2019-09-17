@@ -1,3 +1,5 @@
+import requests
+
 class Player:
     priceMovementMultiplier = 0.1
     SDWeight = 0.5
@@ -12,14 +14,12 @@ class Player:
     def addPriceToAWeek(self):
         weekToAdd = len(self.totalPriceData)
         self.totalPriceData[weekToAdd] = self.currentPrice
-        return print(self.totalPriceData)
+        return self.totalPriceData
 
 
     #Calculates the new price based off of the weights of S&D and PV
     # Changes and returns the current price
     def changePriceByWeights(self,SDPrice,PVPrice):
-        # print(SDPrice)
-        # print(PVPrice)
         self.currentPrice =  (SDPrice * self.SDWeight) + (PVPrice * self.PVWeight)
         return self.addPriceToAWeek()
     
@@ -36,7 +36,40 @@ class Player:
         else:
             raise Exception("Not a valid sport.")
 
-    def __init__(self,ipo,playerName,sport):
+    def getRealDataForSeasonAndPlayer(self,season):
+        url = "https://api.sportsdata.io/v3/nfl/stats/json/PlayerGameStatsByPlayerID/" + season + "/"
+        payload = {'key': '0c474511e0b24cd79f0e587a261f4531', 'format' : 'JSON'}
+        weeklyData = {}
+       
+        for x in range(1,17):
+            tempurl = url + str(x) + "/" + str(self.playerid)
+            r = requests.get(tempurl, params=payload)
+            if r.text != '':
+                data = r.json()
+                ppr = data['FantasyPointsPPR']
+                weeklyData[x] = ppr
+            else:
+                weeklyData[x] = 0
+        return weeklyData
+        
+    def getProjectionDataForSeasonAndPlayer(self,season):
+        url = "https://api.sportsdata.io/v3/nfl/projections/json/PlayerGameProjectionStatsByPlayerID/" + season + "/"
+        payload = {'key': '0c474511e0b24cd79f0e587a261f4531', 'format' : 'JSON'}
+        weeklyData = {}
+       
+        for x in range(1,17):
+            tempurl = url + str(x) + "/" + str(self.playerid)
+            r = requests.get(tempurl, params=payload)
+            if r.text != '':
+                data = r.json()
+                ppr = data['FantasyPointsPPR']
+                weeklyData[x] = ppr
+            else:
+                weeklyData[x] = 0
+        return weeklyData
+
+
+    def __init__(self,ipo,playerName,sport,playerid):
         self.currentPrice = round(ipo,2)
         self.ipo = round(ipo,2)
         self.name = playerName
@@ -44,7 +77,17 @@ class Player:
         self.totalPriceData = {}
         self.totalNumberOfGames = self.getTotalNumberOfGames(sport)
         self.totalPriceData[0] = self.ipo
-                
+        self.playerid = playerid
+        #Go through a given season and get all player stats
+        realData = self.getRealDataForSeasonAndPlayer("2018REG")
+        projectionData = self.getProjectionDataForSeasonAndPlayer("2018REG")
+        print(playerid)
+        print(f"Real Data: {realData}")
+        print(f"Projection Data: {projectionData}")
+
+        for x in range(1,17):
+            self.performanceChange(projectionData[x],realData[x])
+
     
     #changes the players price and returns it
     # @param projection - player's projected points for a given game
@@ -60,7 +103,10 @@ class Player:
     def changeFormula(self,projection,actual):
         projection = float(projection)
         actual = float(actual)
-        return (((actual-projection) / projection) / 4)
+        if (projection != 0):
+            return (((actual-projection) / projection) / 4)
+        else:
+            return 0
 
     #return players price
     def getPrice(self):
@@ -83,7 +129,6 @@ class Player:
     # @param quantity - number of shares bought or sold
     # @param buy - boolean that if true, shares are being purchased. If false, shares are being sold.
     def transaction(self,quantity,buy):
-        print(f"Shares:{quantity}")
         newTotalShares = quantity + self.totalShares
         scaleFactor = quantity/newTotalShares
         scaleFactor *= self.priceMovementMultiplier

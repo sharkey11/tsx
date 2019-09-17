@@ -131,6 +131,7 @@ const checkForLiveGames = () => {
 }
 
 //Go get the data that has changed in the past x minutes and update the tables
+//TODO: CHANGE WEEK AND SEASON DYNAMICALLY
 //Inner function
 const updateLiveGameScore = () => {
   let baseUrl = "https://api.sportsdata.io/v3/nfl/stats/json/BoxScoresDeltaV3"
@@ -216,7 +217,7 @@ const createUpsertQuery = (attributes, tableName, conflictKey, data) => {
     }
     
     //If the attribute is the last one in the dict, remove the comma and add the ON CONFLICT
-    //
+    
     if (atr == attributes.length - 1) {
       query = query.substring(0, query.length - 2)
       query += ") ON CONFLICT(" + conflictKey + ") DO UPDATE SET "

@@ -4,6 +4,7 @@ import random
 import matplotlib
 import matplotlib.pylab as plt
 from tkinter import *
+import requests
 
 from algorithm.initialPriceOffering import IPO
 from algorithm.player import Player
@@ -27,7 +28,7 @@ class ShowPlayer:
         plt.xlim([0,playerObject.totalNumberOfGames])
 
         for i,j in zip(x,y):
-            ax.annotate(str(j) ,xy=(i,j))
+            ax.annotate(str(round(j,2)) ,xy=(i,j))
             
         chart_type = FigureCanvasTkAgg(fig, self.plot)
         chart_type.get_tk_widget().pack()
@@ -65,14 +66,15 @@ class ShowPlayer:
 
 class ShowAllPlayers:
 
-    def __init__(self,allPlayers):
-        self.ipos = allPlayers
+    def __init__(self,allPlayersIpoPrices,playerIds):
+        self.ipos = allPlayersIpoPrices
+        self.playerIds = playerIds;
         self.root = tk.Tk()
         self.openWindow()
 
     def displayPlayerWindow(self,playerName):
         playerIPOPrice = self.ipos.getPrice(playerName)
-        playerObject = Player(playerIPOPrice,playerName,'NFL')
+        playerObject = Player(playerIPOPrice,playerName,'NFL',self.playerIds[playerName])
         plotData = playerObject.totalPriceData
         playerWindow = ShowPlayer(playerObject)
    
@@ -100,9 +102,29 @@ class ShowAllPlayers:
 
 class Driver:
 
+    def pullSeasonProjectionData(self):
+        payload = {'key': '0c474511e0b24cd79f0e587a261f4531', 'format' : 'JSON'}
+        r = requests.get('https://api.sportsdata.io/v3/nfl/projections/json/PlayerSeasonProjectionStats/2019REG', params=payload)
+        data = r.json()
+        allPlayers = []
+        for player in data:
+            if player["PositionCategory"] == "OFF":
+                newPlayer = {}
+                newPlayer["PlayerID"] = player['PlayerID']
+                newPlayer["Name"] = player['Name']
+                newPlayer["Team"] = player['Team']
+                newPlayer["FantasyPointsPPR"] = player['FantasyPointsPPR']
+                allPlayers.append(newPlayer)
+
+        return allPlayers
+
     def __init__(self,fileName):
-        self.ipos = IPO(fileName)
-        allPlayersWindow = ShowAllPlayers(self.ipos)
+        playerData = self.pullSeasonProjectionData()
+        self.ipos = IPO(playerData)
+        ids = {}
+        for player in playerData:
+            ids[player["Name"]] = player["PlayerID"]
+        allPlayersWindow = ShowAllPlayers(self.ipos,ids)
 
     def testTransaction(self,playerName):
         ipoPrice = ipos.getPrice(playerName)
