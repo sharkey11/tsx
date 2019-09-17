@@ -1,4 +1,5 @@
 import requests
+apiKey = '854387143a914d639a32fc9c9c2ca6e1'
 
 class Player:
     priceMovementMultiplier = 0.1
@@ -38,10 +39,10 @@ class Player:
 
     def getRealDataForSeasonAndPlayer(self,season):
         url = "https://api.sportsdata.io/v3/nfl/stats/json/PlayerGameStatsByPlayerID/" + season + "/"
-        payload = {'key': '0c474511e0b24cd79f0e587a261f4531', 'format' : 'JSON'}
+        payload = {'key': apiKey, 'format' : 'JSON'}
         weeklyData = {}
        
-        for x in range(1,17):
+        for x in range(1,self.endWeek):
             tempurl = url + str(x) + "/" + str(self.playerid)
             r = requests.get(tempurl, params=payload)
             if r.text != '':
@@ -54,10 +55,9 @@ class Player:
         
     def getProjectionDataForSeasonAndPlayer(self,season):
         url = "https://api.sportsdata.io/v3/nfl/projections/json/PlayerGameProjectionStatsByPlayerID/" + season + "/"
-        payload = {'key': '0c474511e0b24cd79f0e587a261f4531', 'format' : 'JSON'}
+        payload = {'key': apiKey, 'format' : 'JSON'}
         weeklyData = {}
-       
-        for x in range(1,17):
+        for x in range(1,self.endWeek):
             tempurl = url + str(x) + "/" + str(self.playerid)
             r = requests.get(tempurl, params=payload)
             if r.text != '':
@@ -78,14 +78,15 @@ class Player:
         self.totalNumberOfGames = self.getTotalNumberOfGames(sport)
         self.totalPriceData[0] = self.ipo
         self.playerid = playerid
+        self.endWeek = 3
         #Go through a given season and get all player stats
-        realData = self.getRealDataForSeasonAndPlayer("2018REG")
-        projectionData = self.getProjectionDataForSeasonAndPlayer("2018REG")
+        realData = self.getRealDataForSeasonAndPlayer("2019REG")
+        projectionData = self.getProjectionDataForSeasonAndPlayer("2019REG")
         print(playerid)
         print(f"Real Data: {realData}")
         print(f"Projection Data: {projectionData}")
 
-        for x in range(1,17):
+        for x in range(1,self.endWeek):
             self.performanceChange(projectionData[x],realData[x])
 
     

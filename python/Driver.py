@@ -11,6 +11,7 @@ from algorithm.player import Player
 
 import tkinter as tk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+apiKey = '854387143a914d639a32fc9c9c2ca6e1'
 
 class ShowPlayer:
 
@@ -103,8 +104,9 @@ class ShowAllPlayers:
 class Driver:
 
     def pullSeasonProjectionData(self):
-        payload = {'key': '0c474511e0b24cd79f0e587a261f4531', 'format' : 'JSON'}
-        r = requests.get('https://api.sportsdata.io/v3/nfl/projections/json/PlayerSeasonProjectionStats/2019REG', params=payload)
+        payload = {'key': apiKey, 'format' : 'JSON'}
+        season = "2019"
+        r = requests.get('https://api.sportsdata.io/v3/nfl/projections/json/PlayerSeasonProjectionStats/' + season, params=payload)
         data = r.json()
         allPlayers = []
         for player in data:
@@ -118,7 +120,7 @@ class Driver:
 
         return allPlayers
 
-    def __init__(self,fileName):
+    def __init__(self):
         playerData = self.pullSeasonProjectionData()
         self.ipos = IPO(playerData)
         ids = {}
@@ -156,4 +158,4 @@ class Driver:
             text += "Week " + str(x) + " | Projected: " + str(projected) + " | Actual " + str(actual) + " | Starting Price $" + str(originalPrice) + " | New Price $" + str(newPrice) + "\n"
         printPlot(plotData,playerName,text)
 
-driver = Driver("./data/seasonProjections.csv")
+driver = Driver()
